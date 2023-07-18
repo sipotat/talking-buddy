@@ -1,6 +1,5 @@
 import {Message} from '../utils/local-storage';
-
-const openAIkey = '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';
+import Config from 'react-native-config';
 
 // turn the chat function to a promise that returns the response
 // write a promise function that will return the response
@@ -25,7 +24,7 @@ export const chat = (messages: Message[]) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: 'Bearer ' + openAIkey,
+        Authorization: 'Bearer ' + Config.OPENAI_API_KEY,
       },
       body: JSON.stringify(sendData),
     })

@@ -14,12 +14,14 @@ const App = () => {
   const [conversation, setConversation] = useState<Message[]>([]);
   const [reply, setReply] = useState('');
 
-  Tts.setDefaultLanguage('en-IE');
+  Tts.setDefaultLanguage('en-US');
 
   //   Tts.setDefaultVoice('com.apple.ttsbundle.Yuna-compact');
 
   useEffect(() => {
-    storeChat(conversation);
+    if (conversation.length > 0) {
+      storeChat(conversation);
+    }
   }, [conversation]);
 
   useEffect(() => {
@@ -47,6 +49,7 @@ const App = () => {
 
     Voice.onSpeechResults = _onSpeechResults;
     retrieveChat().then(data => {
+      console.log('data', data);
       setConversation(data);
     });
     return () => {
@@ -70,9 +73,16 @@ const App = () => {
           {role: 'system', content: response, promptTokens, responseTokens},
         ]);
         console.log([...newConversation, {role: 'system', content: response}]);
-        console.log('response', response);
         Tts.stop();
-        Tts.speak(response);
+        Tts.speak(response, {
+          iosVoiceId: 'com.apple.voice.compact.en-GB.Daniel',
+          rate: 0.5,
+          androidParams: {
+            KEY_PARAM_PAN: -1,
+            KEY_PARAM_VOLUME: 0.5,
+            KEY_PARAM_STREAM: 'STREAM_MUSIC',
+          },
+        });
         setStatus(2);
       })
       .catch(error => {
@@ -111,15 +121,27 @@ const App = () => {
       }
     }
   };
+  Tts.voices().then(voices =>
+    voices
+      .filter(voice => voice.language.substring(0, 2) === 'en')
+      .forEach(voice => {
+        console.log(voice);
+      }),
+  );
+
   return (
     <SafeAreaProvider>
       <SafeAreaView style={{flex: 1, alignItems: 'center'}}>
         <Text style={{fontSize: 20}}>
           {['waiting...', 'sending...', 'talking', 'recording'][status]}
         </Text>
-        <TouchableOpacity onPress={handleStart}>
-          <View style={[styles.button, {marginTop: 40}]}>
-            <Text style={styles.text}>{status === 0 ? 'Start' : 'Stop'}</Text>
+        <TouchableOpacity onPress={handleStart} disabled={status !== 0}>
+          <View
+            style={[
+              styles.button,
+              {marginTop: 40, opacity: status === 0 ? 1 : 0},
+            ]}>
+            <Text style={styles.text}>Start</Text>
           </View>
         </TouchableOpacity>
         <View style={{marginTop: 50}}>
@@ -128,13 +150,44 @@ const App = () => {
             prompt tokens:
             {conversation
               .map(message => message.promptTokens)
-              .reduce((a, b) => a + b, 0)}
+              .reduce((a, b) => a + b, 0)}{' '}
+            - $
+            {(
+              (0.0015 *
+                conversation
+                  .map(message => message.promptTokens)
+                  .reduce((a, b) => a + b, 0)) /
+              1000
+            ).toFixed(4)}
           </Text>
           <Text>
             response tokens:
             {conversation
               .map(message => message.responseTokens)
-              .reduce((a, b) => a + b, 0)}
+              .reduce((a, b) => a + b, 0)}{' '}
+            - ${' '}
+            {(
+              (0.002 *
+                conversation
+                  .map(message => message.responseTokens)
+                  .reduce((a, b) => a + b, 0)) /
+              1000
+            ).toFixed(4)}
+          </Text>
+          <Text>
+            Total: $
+            {(
+              (0.0015 *
+                conversation
+                  .map(message => message.promptTokens)
+                  .reduce((a, b) => a + b, 0)) /
+                1000 +
+              (0.002 *
+                conversation
+                  .map(message => message.responseTokens)
+                  .reduce((a, b) => a + b, 0)) /
+                1000
+            ).toFixed(4)}
           </Text>
         </View>
         <TouchableOpacity

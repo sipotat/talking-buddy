@@ -43,6 +43,18 @@
       "size" : "40x40"
     },
     {
+      "filename" : "57.png",
+      "idiom" : "iphone",
+      "scale" : "1x",
+      "size" : "57x57"
+    },
+    {
+      "filename" : "114 1.png",
+      "idiom" : "iphone",
+      "scale" : "2x",
+      "size" : "57x57"
+    },
+    {
       "filename" : "120 1.png",
       "idiom" : "iphone",
       "scale" : "2x",
@@ -97,6 +109,11 @@
       "size" : "1024x1024"
     },
     {
+      "filename" : "1024 1.png",
+      "idiom" : "universal",
+      "scale" : "1x"
+    },
+    {
       "filename" : "40.png",
       "idiom" : "iphone",
       "scale" : "2x",
@@ -118,7 +135,7 @@
       "unassigned" : true
     },
     {
-      "filename" : "120 3.png",
+      "filename" : "40 4.png",
       "idiom" : "iphone",
       "scale" : "2x",
       "size" : "60x60",
@@ -129,6 +146,54 @@
       "idiom" : "iphone",
       "scale" : "3x",
       "size" : "60x60",
+      "unassigned" : true
+    },
+    {
+      "filename" : "40 3.png",
+      "idiom" : "universal",
+      "scale" : "1x",
+      "unassigned" : true
+    },
+    {
+      "filename" : "58 2.png",
+      "idiom" : "universal",
+      "scale" : "1x",
+      "unassigned" : true
+    },
+    {
+      "filename" : "60 2.png",
+      "idiom" : "universal",
+      "scale" : "1x",
+      "unassigned" : true
+    },
+    {
+      "filename" : "80 2.png",
+      "idiom" : "universal",
+      "scale" : "1x",
+      "unassigned" : true
+    },
+    {
+      "filename" : "87 1.png",
+      "idiom" : "universal",
+      "scale" : "1x",
+      "unassigned" : true
+    },
+    {
+      "filename" : "114.png",
+      "idiom" : "universal",
+      "scale" : "1x",
+      "unassigned" : true
+    },
+    {
+      "filename" : "120 4.png",
+      "idiom" : "universal",
+      "scale" : "1x",
+      "unassigned" : true
+    },
+    {
+      "filename" : "180 2.png",
+      "idiom" : "universal",
+      "scale" : "1x",
       "unassigned" : true
     }
   ],
