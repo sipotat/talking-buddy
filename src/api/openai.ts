@@ -24,7 +24,7 @@ export const chat = (messages: Message[]) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: 'Bearer ' + Config.OPENAI_API_KEY,
+        Authorization: 'Bearer ' + Config.OPENAI_KEY,
       },
       body: JSON.stringify(sendData),
     })

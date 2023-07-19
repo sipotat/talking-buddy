@@ -41,6 +41,10 @@
 	<string>The app would like to use your mic</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>We will convert your voice to text </string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>audio</string>
+	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen.storyboard</string>
 	<key>UIRequiredDeviceCapabilities</key>

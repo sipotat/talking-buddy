@@ -7,6 +7,7 @@ import {SafeAreaProvider, SafeAreaView} from 'react-native-safe-area-context';
 import {chat} from './api/openai';
 import {Message, retrieveChat, storeChat} from './utils/local-storage';
 import introText from './utils/intro-text';
+import continueText from './utils/continue-text';
 
 const App = () => {
   // 0-waiting, 1-sending, 2-talking, 3-recording
@@ -25,7 +26,6 @@ const App = () => {
   }, [conversation]);
 
   useEffect(() => {
-    console.log('STATUS', status);
     if (status === 3) {
       startRecording();
     }
@@ -115,19 +115,20 @@ const App = () => {
   };
 
   const handleStart = () => {
-    if (status === 0) {
-      if (conversation.length === 0) {
-        sendReply(introText);
-      }
+    if (conversation.length === 0) {
+      sendReply(introText);
+    } else {
+      sendReply(continueText);
     }
   };
-  Tts.voices().then(voices =>
-    voices
-      .filter(voice => voice.language.substring(0, 2) === 'en')
-      .forEach(voice => {
-        console.log(voice);
-      }),
-  );
+
+  // Tts.voices().then(voices =>
+  //   voices
+  //     .filter(voice => voice.language.substring(0, 2) === 'en')
+  //     .forEach(voice => {
+  //       console.log(voice);
+  //     }),
+  // );
 
   return (
     <SafeAreaProvider>
@@ -141,7 +142,9 @@ const App = () => {
               styles.button,
               {marginTop: 40, opacity: status === 0 ? 1 : 0},
             ]}>
-            <Text style={styles.text}>Start</Text>
+            <Text style={styles.text}>
+              {conversation.length === 0 ? 'Start' : 'Continue'}
+            </Text>
           </View>
         </TouchableOpacity>
         <View style={{marginTop: 50}}>
@@ -193,6 +196,7 @@ const App = () => {
         <TouchableOpacity
           onPress={() => {
             setConversation([]);
+            storeChat([]);
             setStatus(0);
           }}>
           <View style={[styles.button, {marginTop: 50}]}>
