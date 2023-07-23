@@ -28,3 +28,25 @@ export const retrieveChat = async () => {
     console.log('error', error);
   }
 };
+
+export const storeVoice = async (voiceId: string) => {
+  try {
+    await AsyncStorage.setItem('voice', voiceId);
+  } catch (error) {
+    // Error saving data
+    console.log('error', error);
+  }
+};
+
+export const retrieveVoice = async () => {
+  try {
+    const value = await AsyncStorage.getItem('voice');
+    if (value !== null) {
+      return value;
+    } else {
+      return '';
+    }
+  } catch (error) {
+    console.log('error', error);
+  }
+};
