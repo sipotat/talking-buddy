@@ -93,9 +93,9 @@ export const Main = () => {
       ...conversation,
       {
         role: 'user',
-        content: `${text}. dont use more than ${maxSentences} sentences. ${
+        content: `${text}. dont use more than ${maxSentences} sentences. if I have grammer errors in my prompts, ${
           fixGrammer ? 'fix' : 'dont fix'
-        } grammer.`,
+        } them.`,
         promptTokens: 0,
         responseTokens: 0,
       },
