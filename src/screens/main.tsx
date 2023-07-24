@@ -56,10 +56,10 @@ export const Main = () => {
   }, []);
 
   useEffect(() => {
-    if (voiceId === '') {
+    if (voiceId === '' && voices.length > 0) {
       setVoiceId(voices[0].id);
     }
-  }, [voiceId]);
+  }, [voiceId, voices]);
 
   useEffect(() => {
     if (status === 3) {
@@ -125,7 +125,6 @@ export const Main = () => {
 
   const startRecording = async () => {
     try {
-      console.log('record');
       await Voice.start('en-US');
     } catch (e) {
       console.error(e);
