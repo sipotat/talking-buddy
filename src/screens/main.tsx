@@ -7,7 +7,7 @@ import SelectDropdown from 'react-native-select-dropdown';
 import ToggleSwitch from 'toggle-switch-react-native';
 
 import {chat} from '../api/openai';
-import {Message, retrieveVoice, storeVoice} from '../utils/local-storage';
+import {Message} from '../utils/local-storage';
 import {useRecoilState} from 'recoil';
 import {
   fixGrammerState,
@@ -27,24 +27,6 @@ export const Main = () => {
   const [reply, setReply] = useState('');
 
   Tts.setDefaultLanguage('en-US');
-
-  // useEffect(() => {
-  //   if (conversation.length > 0) {
-  //     storeChat(conversation);
-  //   }
-  // }, [conversation]);
-
-  useEffect(() => {
-    if (status === 3) {
-      startRecording();
-    }
-  }, [status]);
-
-  useEffect(() => {
-    if (reply !== '') {
-      sendReply(reply);
-    }
-  }, [reply]);
 
   // Initialize Voice module on component mount
   useEffect(() => {
@@ -66,22 +48,29 @@ export const Main = () => {
     );
 
     Voice.onSpeechResults = _onSpeechResults;
-    // retrieveChat().then(data => {
-    //   console.log('data', data);
-    //   setConversation(data);
-    // });
-    // retrieveVoice().then(voice => {
-    //   if (voice === '') {
-    //     setVoiceId(voices[0].id);
-    //   } else {
-    //     setVoiceId(voice);
-    //   }
-    // });
     return () => {
       Voice.destroy().then(Voice.removeAllListeners);
       finishEvent.remove();
     };
   }, []);
+
+  useEffect(() => {
+    if (voiceId === '') {
+      setVoiceId(voices[0].id);
+    }
+  }, [voiceId]);
+
+  useEffect(() => {
+    if (status === 3) {
+      startRecording();
+    }
+  }, [status]);
+
+  useEffect(() => {
+    if (reply !== '') {
+      sendReply(reply);
+    }
+  }, [reply]);
 
   const speak = (text: string) => {
     Tts.stop();
@@ -135,6 +124,7 @@ export const Main = () => {
 
   const startRecording = async () => {
     try {
+      console.log('record');
       await Voice.start('en-US');
     } catch (e) {
       console.error(e);
@@ -143,11 +133,12 @@ export const Main = () => {
 
   const handleStart = () => {
     speak('how can I help you?');
+    setConversation([{role: 'system', content: 'how can I help you?'}]);
   };
 
   const handleStop = () => {
     Tts.stop();
-    setStatus(3);
+    // setStatus(3);
   };
 
   return (
@@ -218,7 +209,19 @@ export const Main = () => {
             data={voices.map(voice => voice.name)}
             onSelect={(selectedItem, index) => {
               setVoiceId(voices[index].id);
-              //   storeVoice(voices[index].id);
+              //   Tts.stop();
+              //   Tts.speak(
+              //     `Hello, my name is ${voices[index].name} and this is my voice`,
+              //     {
+              //       iosVoiceId: voices[index].id,
+              //       rate: 0.5,
+              //       androidParams: {
+              //         KEY_PARAM_PAN: -1,
+              //         KEY_PARAM_VOLUME: 0.5,
+              //         KEY_PARAM_STREAM: 'STREAM_MUSIC',
+              //       },
+              //     },
+              //   );
             }}
             defaultValueByIndex={voices.findIndex(
               voice => voice.id === voiceId,
