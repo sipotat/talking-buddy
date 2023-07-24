@@ -5,6 +5,7 @@ import Tts from 'react-native-tts';
 import {SafeAreaProvider, SafeAreaView} from 'react-native-safe-area-context';
 import SelectDropdown from 'react-native-select-dropdown';
 import ToggleSwitch from 'toggle-switch-react-native';
+import KeepAwake from 'react-native-keep-awake';
 
 import {chat} from '../api/openai';
 import {Message} from '../utils/local-storage';
@@ -133,7 +134,14 @@ export const Main = () => {
 
   const handleStart = () => {
     speak('how can I help you?');
-    setConversation([{role: 'system', content: 'how can I help you?'}]);
+    setConversation([
+      {
+        role: 'system',
+        content: 'how can I help you?',
+        promptTokens: 0,
+        responseTokens: 0,
+      },
+    ]);
   };
 
   const handleStop = () => {
@@ -248,6 +256,7 @@ export const Main = () => {
           </View>
         </View>
       </SafeAreaView>
+      <KeepAwake />
     </SafeAreaProvider>
   );
 };
