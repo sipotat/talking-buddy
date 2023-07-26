@@ -36,6 +36,7 @@ export const Settings = () => {
           .map(voice => ({id: voice.id, name: voice.name})),
       ),
     );
+    console.log(voices);
   }, []);
 
   return (

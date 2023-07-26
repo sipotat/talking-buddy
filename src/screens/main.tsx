@@ -1,24 +1,36 @@
 import React, {useState, useEffect} from 'react';
-import {Text, View, StyleSheet, TouchableOpacity} from 'react-native';
+import {
+  Text,
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  useWindowDimensions,
+} from 'react-native';
 import Voice from '@react-native-voice/voice';
 import Tts from 'react-native-tts';
-import SelectDropdown from 'react-native-select-dropdown';
-import ToggleSwitch from 'toggle-switch-react-native';
-import KeepAwake from 'react-native-keep-awake';
+import {GiftedChat} from 'react-native-gifted-chat';
+import {useHeaderHeight} from '@react-navigation/elements';
 
 import {chat} from '../api/openai';
-import {Message} from '../utils/local-storage';
 
-import {useDispatch, useSelector} from 'react-redux';
-import {setVoiceId, setFixGrammer, setMaxSentences} from '../state/config';
+import {useSelector} from 'react-redux';
+
+type Message = {
+  role: 'user' | 'system';
+  content: string;
+  promptTokens: number;
+  responseTokens: number;
+  createdAt: Date;
+};
 
 export const Main = () => {
-  const dispatch = useDispatch();
+  const {width: screenWidth, height: screenHeight} = useWindowDimensions();
+  const headerHeight = useHeaderHeight();
+  const [upperAreaHeight, setUpperAreaHeight] = useState(0);
 
   // 0-waiting, 1-sending, 2-talking, 3-recording
   const [status, setStatus] = useState(0);
   const [conversation, setConversation] = useState<Message[]>([]);
-  const [voices, setVoices] = useState<{id: string; name: string}[]>([]);
   const voiceId = useSelector(state => state.config.voiceId);
   const maxSentences = useSelector(state => state.config.maxSentences);
   const fixGrammer = useSelector(state => state.config.fixGrammer);
@@ -31,7 +43,6 @@ export const Main = () => {
   const [reply, setReply] = useState('');
 
   Tts.setDefaultLanguage('en-US');
-
   // Initialize Voice module on component mount
   useEffect(() => {
     // Tts.addEventListener('tts-start', () => {});
@@ -41,28 +52,12 @@ export const Main = () => {
       setStatus(3);
     });
 
-    Tts.voices().then(voices =>
-      setVoices(
-        voices
-          .filter(
-            voice => voice.id.substring(0, 26) === 'com.apple.voice.compact.en',
-          )
-          .map(voice => ({id: voice.id, name: voice.name})),
-      ),
-    );
-
     Voice.onSpeechResults = _onSpeechResults;
     return () => {
       Voice.destroy().then(Voice.removeAllListeners);
       finishEvent.remove();
     };
   }, []);
-
-  useEffect(() => {
-    if (voiceId === '' && voices.length > 0) {
-      dispatch(setVoiceId(voices[0].id));
-    }
-  }, [voiceId, voices]);
 
   useEffect(() => {
     if (status === 3) {
@@ -101,6 +96,7 @@ export const Main = () => {
         }`,
         promptTokens: 0,
         responseTokens: 0,
+        createdAt: new Date(),
       },
     ];
     setConversation(newConversation);
@@ -109,7 +105,13 @@ export const Main = () => {
       .then(({response, promptTokens, responseTokens}) => {
         setConversation([
           ...newConversation,
-          {role: 'system', content: response, promptTokens, responseTokens},
+          {
+            role: 'system',
+            content: response,
+            promptTokens,
+            responseTokens,
+            createdAt: new Date(),
+          },
         ]);
         speak(response);
       })
@@ -142,6 +144,7 @@ export const Main = () => {
         content: 'how can I help you?',
         promptTokens: 0,
         responseTokens: 0,
+        createdAt: new Date(),
       },
     ]);
   };
@@ -153,68 +156,108 @@ export const Main = () => {
 
   return (
     <View style={{backgroundColor: 'white', alignItems: 'center', flex: 1}}>
-      <Text style={{fontSize: 20, marginTop: 50}}>
-        {['waiting...', 'sending...', 'talking', 'recording'][status]}
-      </Text>
-      <TouchableOpacity
-        onPress={status === 0 ? handleStart : handleStop}
-        disabled={status === 1 || status === 3}>
-        <View
-          style={[
-            styles.button,
-            status === 1 || status === 3 ? styles.disabledButton : undefined,
-            {marginTop: 40},
-          ]}>
-          <Text style={styles.text}>{status === 0 ? 'Start' : 'Stop'}</Text>
-        </View>
-      </TouchableOpacity>
-      <View style={{marginTop: 50}}>
-        {/* display the summary of all conversation messages promptTokens */}
-        <Text>
-          prompt tokens:
-          {conversation
-            .map(message => message.promptTokens)
-            .reduce((a, b) => a + b, 0)}{' '}
-          - $
-          {(
-            (0.0015 *
-              conversation
-                .map(message => message.promptTokens)
-                .reduce((a, b) => a + b, 0)) /
-            1000
-          ).toFixed(4)}
+      <View
+        style={{alignItems: 'center'}}
+        onLayout={e => {
+          setUpperAreaHeight(e.nativeEvent.layout.height);
+        }}>
+        <Text style={{fontSize: 20, marginTop: 20}}>
+          {['waiting...', 'sending...', 'talking', 'recording'][status]}
         </Text>
-        <Text>
-          response tokens:
-          {conversation
-            .map(message => message.responseTokens)
-            .reduce((a, b) => a + b, 0)}{' '}
-          - ${' '}
-          {(
-            (0.002 *
-              conversation
-                .map(message => message.responseTokens)
-                .reduce((a, b) => a + b, 0)) /
-            1000
-          ).toFixed(4)}
-        </Text>
-        <Text>
-          Total: $
-          {(
-            (0.0015 *
-              conversation
-                .map(message => message.promptTokens)
-                .reduce((a, b) => a + b, 0)) /
-              1000 +
-            (0.002 *
-              conversation
-                .map(message => message.responseTokens)
-                .reduce((a, b) => a + b, 0)) /
+        <TouchableOpacity
+          onPress={status === 0 ? handleStart : handleStop}
+          disabled={status === 1 || status === 3}>
+          <View
+            style={[
+              styles.button,
+              status === 1 || status === 3 ? styles.disabledButton : undefined,
+              {marginTop: 20},
+            ]}>
+            <Text style={styles.text}>{status === 0 ? 'Start' : 'Stop'}</Text>
+          </View>
+        </TouchableOpacity>
+        <View style={{marginTop: 20}}>
+          {/* display the summary of all conversation messages promptTokens */}
+          <Text>
+            prompt tokens:
+            {conversation
+              .map(message => message.promptTokens)
+              .reduce((a, b) => a + b, 0)}{' '}
+            - $
+            {(
+              (0.0015 *
+                conversation
+                  .map(message => message.promptTokens)
+                  .reduce((a, b) => a + b, 0)) /
               1000
-          ).toFixed(4)}
-        </Text>
+            ).toFixed(4)}
+          </Text>
+          <Text>
+            response tokens:
+            {conversation
+              .map(message => message.responseTokens)
+              .reduce((a, b) => a + b, 0)}{' '}
+            - ${' '}
+            {(
+              (0.002 *
+                conversation
+                  .map(message => message.responseTokens)
+                  .reduce((a, b) => a + b, 0)) /
+              1000
+            ).toFixed(4)}
+          </Text>
+          <Text>
+            Total: $
+            {(
+              (0.0015 *
+                conversation
+                  .map(message => message.promptTokens)
+                  .reduce((a, b) => a + b, 0)) /
+                1000 +
+              (0.002 *
+                conversation
+                  .map(message => message.responseTokens)
+                  .reduce((a, b) => a + b, 0)) /
+                1000
+            ).toFixed(4)}
+          </Text>
+        </View>
       </View>
-      <KeepAwake />
+      <View
+        style={{
+          marginTop: 20,
+          width: screenWidth - 16,
+          height: screenHeight - upperAreaHeight - headerHeight - 50,
+          borderWidth: 1,
+          borderRadius: 8,
+        }}>
+        <GiftedChat
+          messages={conversation.reverse().map((message, index) => ({
+            _id: index,
+            text: message.content,
+            createdAt: message.createdAt,
+            user:
+              message.role === 'user'
+                ? {
+                    _id: 1,
+                    name: 'Me',
+                    avatar: 'https://placeimg.com/140/140/any',
+                  }
+                : {
+                    _id: 2,
+                    name: 'System',
+                    avatar: 'https://placeimg.com/140/140/any',
+                    system: true,
+                  },
+          }))}
+          // onSend={messages => onSend(messages)}
+          user={{
+            _id: 1,
+          }}
+          renderInputToolbar={() => null}
+          renderAvatar={() => null}
+        />
+      </View>
     </View>
   );
 };

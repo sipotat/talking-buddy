@@ -1,5 +1,6 @@
 import React from 'react';
 import {Provider} from 'react-redux';
+import KeepAwake from 'react-native-keep-awake';
 
 import {RootNavigator} from './navigators/root';
 import store from './state/store';
@@ -14,6 +15,7 @@ const App = () => {
       <Provider store={store}>
         <PersistGate loading={null} persistor={persistor}>
           <RootNavigator />
+          <KeepAwake />
         </PersistGate>
       </Provider>
     </React.StrictMode>

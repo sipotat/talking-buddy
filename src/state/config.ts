@@ -3,7 +3,7 @@ import {createSlice} from '@reduxjs/toolkit';
 export const configSlice = createSlice({
   name: 'config',
   initialState: {
-    voiceId: '',
+    voiceId: 'com.apple.voice.compact.en-AU.Karen',
     maxSentences: 5,
     fixGrammer: true,
     fixGrammerSentence: 'fix my grammer',
