@@ -2,29 +2,32 @@ import React, {useState, useEffect} from 'react';
 import {Text, View, StyleSheet, TouchableOpacity} from 'react-native';
 import Voice from '@react-native-voice/voice';
 import Tts from 'react-native-tts';
-import {SafeAreaProvider, SafeAreaView} from 'react-native-safe-area-context';
 import SelectDropdown from 'react-native-select-dropdown';
 import ToggleSwitch from 'toggle-switch-react-native';
 import KeepAwake from 'react-native-keep-awake';
 
 import {chat} from '../api/openai';
 import {Message} from '../utils/local-storage';
-import {useRecoilState} from 'recoil';
-import {
-  fixGrammerState,
-  maxSentencesState,
-  voiceIdState,
-} from '../state/config';
+
+import {useDispatch, useSelector} from 'react-redux';
+import {setVoiceId, setFixGrammer, setMaxSentences} from '../state/config';
 
 export const Main = () => {
+  const dispatch = useDispatch();
+
   // 0-waiting, 1-sending, 2-talking, 3-recording
   const [status, setStatus] = useState(0);
   const [conversation, setConversation] = useState<Message[]>([]);
   const [voices, setVoices] = useState<{id: string; name: string}[]>([]);
-  const [voiceId, setVoiceId] = useRecoilState(voiceIdState);
-  const [maxSentences, setMaxSentences] = useRecoilState(maxSentencesState);
-  const [fixGrammer, setfixGrammer] = useRecoilState(fixGrammerState);
-
+  const voiceId = useSelector(state => state.config.voiceId);
+  const maxSentences = useSelector(state => state.config.maxSentences);
+  const fixGrammer = useSelector(state => state.config.fixGrammer);
+  const fixGrammerSentence = useSelector(
+    state => state.config.fixGrammerSentence,
+  );
+  const dontFixGrammerSentence = useSelector(
+    state => state.config.dontFixGrammerSentence,
+  );
   const [reply, setReply] = useState('');
 
   Tts.setDefaultLanguage('en-US');
@@ -57,7 +60,7 @@ export const Main = () => {
 
   useEffect(() => {
     if (voiceId === '' && voices.length > 0) {
-      setVoiceId(voices[0].id);
+      dispatch(setVoiceId(voices[0].id));
     }
   }, [voiceId, voices]);
 
@@ -93,9 +96,9 @@ export const Main = () => {
       ...conversation,
       {
         role: 'user',
-        content: `${text}. dont use more than ${maxSentences} sentences. if I have grammer errors in my prompts, ${
-          fixGrammer ? 'fix' : 'dont fix'
-        } them.`,
+        content: `${text}. dont use more than ${maxSentences} sentences.${
+          fixGrammer ? fixGrammerSentence : dontFixGrammerSentence
+        }`,
         promptTokens: 0,
         responseTokens: 0,
       },
@@ -149,114 +152,70 @@ export const Main = () => {
   };
 
   return (
-    <SafeAreaProvider>
-      <SafeAreaView style={{flex: 1, alignItems: 'center'}}>
-        <Text style={{fontSize: 20}}>
-          {['waiting...', 'sending...', 'talking', 'recording'][status]}
-        </Text>
-        <TouchableOpacity
-          onPress={status === 0 ? handleStart : handleStop}
-          disabled={status === 1 || status === 3}>
-          <View
-            style={[
-              styles.button,
-              status === 1 || status === 3 ? styles.disabledButton : undefined,
-              {marginTop: 40},
-            ]}>
-            <Text style={styles.text}>{status === 0 ? 'Start' : 'Stop'}</Text>
-          </View>
-        </TouchableOpacity>
-        <View style={{marginTop: 50}}>
-          {/* display the summary of all conversation messages promptTokens */}
-          <Text>
-            prompt tokens:
-            {conversation
-              .map(message => message.promptTokens)
-              .reduce((a, b) => a + b, 0)}{' '}
-            - $
-            {(
-              (0.0015 *
-                conversation
-                  .map(message => message.promptTokens)
-                  .reduce((a, b) => a + b, 0)) /
-              1000
-            ).toFixed(4)}
-          </Text>
-          <Text>
-            response tokens:
-            {conversation
-              .map(message => message.responseTokens)
-              .reduce((a, b) => a + b, 0)}{' '}
-            - ${' '}
-            {(
-              (0.002 *
-                conversation
-                  .map(message => message.responseTokens)
-                  .reduce((a, b) => a + b, 0)) /
-              1000
-            ).toFixed(4)}
-          </Text>
-          <Text>
-            Total: $
-            {(
-              (0.0015 *
-                conversation
-                  .map(message => message.promptTokens)
-                  .reduce((a, b) => a + b, 0)) /
-                1000 +
-              (0.002 *
-                conversation
-                  .map(message => message.responseTokens)
-                  .reduce((a, b) => a + b, 0)) /
-                1000
-            ).toFixed(4)}
-          </Text>
-          <Text style={{marginTop: 50, fontSize: 18}}>Voice:</Text>
-          <SelectDropdown
-            data={voices.map(voice => voice.name)}
-            onSelect={(selectedItem, index) => {
-              setVoiceId(voices[index].id);
-              //   Tts.stop();
-              //   Tts.speak(
-              //     `Hello, my name is ${voices[index].name} and this is my voice`,
-              //     {
-              //       iosVoiceId: voices[index].id,
-              //       rate: 0.5,
-              //       androidParams: {
-              //         KEY_PARAM_PAN: -1,
-              //         KEY_PARAM_VOLUME: 0.5,
-              //         KEY_PARAM_STREAM: 'STREAM_MUSIC',
-              //       },
-              //     },
-              //   );
-            }}
-            defaultValueByIndex={voices.findIndex(
-              voice => voice.id === voiceId,
-            )}
-          />
-          <Text style={{marginTop: 50, fontSize: 18}}>Max sentences:</Text>
-          <SelectDropdown
-            data={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
-            onSelect={selectedItem => {
-              setMaxSentences(selectedItem);
-            }}
-            defaultValue={maxSentences}
-          />
-          <View style={{marginTop: 50}}>
-            <ToggleSwitch
-              isOn={fixGrammer}
-              onColor="blue"
-              offColor="grey"
-              label="Fix grammer"
-              labelStyle={{fontSize: 18}}
-              size="large"
-              onToggle={setfixGrammer}
-            />
-          </View>
+    <View style={{backgroundColor: 'white', alignItems: 'center', flex: 1}}>
+      <Text style={{fontSize: 20, marginTop: 50}}>
+        {['waiting...', 'sending...', 'talking', 'recording'][status]}
+      </Text>
+      <TouchableOpacity
+        onPress={status === 0 ? handleStart : handleStop}
+        disabled={status === 1 || status === 3}>
+        <View
+          style={[
+            styles.button,
+            status === 1 || status === 3 ? styles.disabledButton : undefined,
+            {marginTop: 40},
+          ]}>
+          <Text style={styles.text}>{status === 0 ? 'Start' : 'Stop'}</Text>
         </View>
-      </SafeAreaView>
+      </TouchableOpacity>
+      <View style={{marginTop: 50}}>
+        {/* display the summary of all conversation messages promptTokens */}
+        <Text>
+          prompt tokens:
+          {conversation
+            .map(message => message.promptTokens)
+            .reduce((a, b) => a + b, 0)}{' '}
+          - $
+          {(
+            (0.0015 *
+              conversation
+                .map(message => message.promptTokens)
+                .reduce((a, b) => a + b, 0)) /
+            1000
+          ).toFixed(4)}
+        </Text>
+        <Text>
+          response tokens:
+          {conversation
+            .map(message => message.responseTokens)
+            .reduce((a, b) => a + b, 0)}{' '}
+          - ${' '}
+          {(
+            (0.002 *
+              conversation
+                .map(message => message.responseTokens)
+                .reduce((a, b) => a + b, 0)) /
+            1000
+          ).toFixed(4)}
+        </Text>
+        <Text>
+          Total: $
+          {(
+            (0.0015 *
+              conversation
+                .map(message => message.promptTokens)
+                .reduce((a, b) => a + b, 0)) /
+              1000 +
+            (0.002 *
+              conversation
+                .map(message => message.responseTokens)
+                .reduce((a, b) => a + b, 0)) /
+              1000
+          ).toFixed(4)}
+        </Text>
+      </View>
       <KeepAwake />
-    </SafeAreaProvider>
+    </View>
   );
 };
 

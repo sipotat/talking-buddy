@@ -1,22 +1,21 @@
 import React from 'react';
-import {RecoilRoot} from 'recoil';
+import {Provider} from 'react-redux';
 
-import {Main} from './screens/main';
-import {Text, View} from 'react-native';
+import {RootNavigator} from './navigators/root';
+import store from './state/store';
+import {PersistGate} from 'redux-persist/integration/react';
+import {persistStore} from 'redux-persist';
+
+let persistor = persistStore(store);
 
 const App = () => {
   return (
     <React.StrictMode>
-      <React.Suspense
-        fallback={
-          <View>
-            <Text>Loading</Text>
-          </View>
-        }>
-        <RecoilRoot>
-          <Main />
-        </RecoilRoot>
-      </React.Suspense>
+      <Provider store={store}>
+        <PersistGate loading={null} persistor={persistor}>
+          <RootNavigator />
+        </PersistGate>
+      </Provider>
     </React.StrictMode>
   );
 };

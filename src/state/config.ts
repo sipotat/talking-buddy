@@ -1,38 +1,40 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import {AtomEffect, DefaultValue, atom} from 'recoil';
+import {createSlice} from '@reduxjs/toolkit';
 
-function persistAtom<T>(key: string): AtomEffect<T> {
-  return ({setSelf, onSet}) => {
-    setSelf(
-      AsyncStorage.getItem(key).then(
-        savedValue =>
-          savedValue != null ? JSON.parse(savedValue) : new DefaultValue(), // Abort initialization if no value was stored
-      ),
-    );
-
-    // Subscribe to state changes and persist them to localForage
-    onSet((newValue, _, isReset) => {
-      isReset
-        ? AsyncStorage.removeItem(key)
-        : AsyncStorage.setItem(key, JSON.stringify(newValue));
-    });
-  };
-}
-
-export const voiceIdState = atom({
-  key: 'VoiceID',
-  default: '',
-  effects_UNSTABLE: [persistAtom('config-state-voice-id')],
+export const configSlice = createSlice({
+  name: 'config',
+  initialState: {
+    voiceId: '',
+    maxSentences: 5,
+    fixGrammer: true,
+    fixGrammerSentence: 'fix my grammer',
+    dontFixGrammerSentence: "don't fix my grammer",
+  },
+  reducers: {
+    setVoiceId: (state, action) => {
+      state.voiceId = action.payload;
+    },
+    setMaxSentences: (state, action) => {
+      state.maxSentences = action.payload;
+    },
+    setFixGrammer: (state, action) => {
+      state.fixGrammer = action.payload;
+    },
+    setFixGrammerSentence: (state, action) => {
+      state.fixGrammerSentence = action.payload;
+    },
+    setDontFixGrammerSentence: (state, action) => {
+      state.dontFixGrammerSentence = action.payload;
+    },
+  },
 });
 
-export const maxSentencesState = atom({
-  key: 'MaxSentences',
-  default: 5,
-  effects_UNSTABLE: [persistAtom('config-state-max-sentences')],
-});
+// Action creators are generated for each case reducer function
+export const {
+  setVoiceId,
+  setMaxSentences,
+  setFixGrammer,
+  setFixGrammerSentence,
+  setDontFixGrammerSentence,
+} = configSlice.actions;
 
-export const fixGrammerState = atom({
-  key: 'FixGrammer',
-  default: true,
-  effects_UNSTABLE: [persistAtom('config-state-fix-grammer')],
-});
+export default configSlice.reducer;
