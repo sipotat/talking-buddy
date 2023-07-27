@@ -18,6 +18,7 @@ import {useSelector} from 'react-redux';
 type Message = {
   role: 'user' | 'system';
   content: string;
+  message: string;
   promptTokens: number;
   responseTokens: number;
   createdAt: Date;
@@ -91,9 +92,10 @@ export const Main = () => {
       ...conversation,
       {
         role: 'user',
-        content: `${text}. dont use more than ${maxSentences} sentences.${
+        content: `${text}. ${
           fixGrammer ? fixGrammerSentence : dontFixGrammerSentence
-        }`,
+        } and please do not use more than ${maxSentences} sentences.`,
+        message: text,
         promptTokens: 0,
         responseTokens: 0,
         createdAt: new Date(),
@@ -108,6 +110,7 @@ export const Main = () => {
           {
             role: 'system',
             content: response,
+            message: response,
             promptTokens,
             responseTokens,
             createdAt: new Date(),
@@ -121,7 +124,6 @@ export const Main = () => {
   };
 
   const _onSpeechResults = e => {
-    e.value && console.log(e.value[0]);
     if (e.value && e.value[0].substring(e.value[0].length - 4) === 'stop') {
       Voice.cancel();
       setReply(e.value[0].substring(0, e.value[0].length - 4));
@@ -142,6 +144,7 @@ export const Main = () => {
       {
         role: 'system',
         content: 'how can I help you?',
+        message: 'how can I help you?',
         promptTokens: 0,
         responseTokens: 0,
         createdAt: new Date(),
@@ -151,7 +154,6 @@ export const Main = () => {
 
   const handleStop = () => {
     Tts.stop();
-    // setStatus(3);
   };
 
   return (
@@ -177,7 +179,6 @@ export const Main = () => {
           </View>
         </TouchableOpacity>
         <View style={{marginTop: 20}}>
-          {/* display the summary of all conversation messages promptTokens */}
           <Text>
             prompt tokens:
             {conversation
@@ -232,24 +233,27 @@ export const Main = () => {
           borderRadius: 8,
         }}>
         <GiftedChat
-          messages={conversation.reverse().map((message, index) => ({
-            _id: index,
-            text: message.content,
-            createdAt: message.createdAt,
-            user:
-              message.role === 'user'
-                ? {
-                    _id: 1,
-                    name: 'Me',
-                    avatar: 'https://placeimg.com/140/140/any',
-                  }
-                : {
-                    _id: 2,
-                    name: 'System',
-                    avatar: 'https://placeimg.com/140/140/any',
-                    system: true,
-                  },
-          }))}
+          messages={conversation
+            .slice()
+            .sort((a, b) => (a.createdAt > b.createdAt ? -1 : 1))
+            .map((message, index) => ({
+              _id: index,
+              text: message.message,
+              createdAt: message.createdAt,
+              user:
+                message.role === 'user'
+                  ? {
+                      _id: 1,
+                      name: 'Me',
+                      avatar: 'https://placeimg.com/140/140/any',
+                    }
+                  : {
+                      _id: 2,
+                      name: 'System',
+                      avatar: 'https://placeimg.com/140/140/any',
+                      system: true,
+                    },
+            }))}
           // onSend={messages => onSend(messages)}
           user={{
             _id: 1,
