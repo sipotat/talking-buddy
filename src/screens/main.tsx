@@ -24,6 +24,8 @@ type Message = {
   createdAt: Date;
 };
 
+const HebrewVoiceId = 'com.apple.voice.compact.he-IL.Carmit';
+
 export const Main = () => {
   const {width: screenWidth, height: screenHeight} = useWindowDimensions();
   const headerHeight = useHeaderHeight();
@@ -75,7 +77,7 @@ export const Main = () => {
   const speak = (text: string) => {
     Tts.stop();
     Tts.speak(text, {
-      iosVoiceId: voiceId!,
+      iosVoiceId: text.match(/[\u0590-\u05FF]/) ? HebrewVoiceId : voiceId!,
       rate: 0.5,
       androidParams: {
         KEY_PARAM_PAN: -1,

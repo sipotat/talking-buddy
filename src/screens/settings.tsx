@@ -27,16 +27,16 @@ export const Settings = () => {
   const [voices, setVoices] = useState<{id: string; name: string}[]>([]);
 
   useEffect(() => {
-    Tts.voices().then(voices =>
+    Tts.voices().then(_voices => {
+      // console.log(_voices);
       setVoices(
-        voices
+        _voices
           .filter(
             voice => voice.id.substring(0, 26) === 'com.apple.voice.compact.en',
           )
           .map(voice => ({id: voice.id, name: voice.name})),
-      ),
-    );
-    console.log(voices);
+      );
+    });
   }, []);
 
   return (
